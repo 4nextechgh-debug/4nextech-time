@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Punches</h1>
+<div class="card">
+  <h2>Add a manual punch</h2>
+  <form method="post" class="grid">
+    <label>Employee
+      <select name="code" required>{% for e in emps %}<option value="{{ e.code }}">{{ e.name }} ({{ e.code }})</option>{% endfor %}</select>
+    </label>
+    <label>Date and time<input type="datetime-local" name="ts" value="{{ now }}" required></label>
+    <label>Note<input name="note" placeholder="Forgot to clock out"></label>
+    <div><button>Add punch</button></div>
+  </form>
+</div>
+<div class="card">
+  <form method="get" class="grid" style="margin-bottom:10px">
+    <label>From<input type="date" name="start" value="{{ start }}"></label>
+    <label>To<input type="date" name="end" value="{{ end }}"></label>
+    <label>Employee code<input name="code" value="{{ code }}"></label>
+    <div><button class="sec">Filter</button></div>
+  </form>
+  <table>
+    <tr><th>Time</th><th>Employee</th><th>Source</th><th>Device</th><th>Note</th><th></th></tr>
+    {% for p in rows %}
+    <tr><td>{{ p.ts }}</td><td>{{ p.name }} <span class="mute">({{ p.employee_code }})</span></td>
+        <td><span class="tag">{{ p.source }}</span></td><td>{{ p.device_name }}</td><td>{{ p.note }}</td>
+        <td>{% if p.source != 'device' %}<form class="inline" method="post" action="{{ url_for('punch_delete', pid=p.id) }}" onsubmit="return confirm('Delete this punch?')"><button class="del">Delete</button></form>{% endif %}</td></tr>
+    {% else %}<tr><td colspan="6" class="mute">No punches in this range.</td></tr>{% endfor %}
+  </table>
+  <p class="mute">Showing up to 500 rows. Device punches are read-only; they come from the device.</p>
+</div>
+{% endblock %}

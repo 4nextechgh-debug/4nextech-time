@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Devices</h1>
+<div class="card">
+  <h2>Add a ZKTeco device</h2>
+  <form method="post" class="grid">
+    <label>Name<input name="name" placeholder="Main gate"></label>
+    <label>IP address<input name="ip" required placeholder="192.168.1.201"></label>
+    <label>Port<input type="number" name="port" value="4370"></label>
+    <label>Comm key (0 if none)<input type="number" name="comm_key" value="0"></label>
+    <div><button>Add device</button></div>
+  </form>
+  <p class="mute">Add as many devices as you like. They are all pulled automatically every few minutes, and you can sync on demand below.</p>
+</div>
+<div class="card">
+  <form method="post" action="{{ url_for('device_sync_all') }}" style="margin-bottom:10px"><button>Sync all devices now</button></form>
+  <table>
+    <tr><th>Name</th><th>Address</th><th>Last sync</th><th>Status</th><th></th></tr>
+    {% for d in rows %}
+    <tr {% if not d.active %}class="mute"{% endif %}>
+      <td>{{ d.name }}</td><td>{{ d.ip }}:{{ d.port }}</td><td>{{ d.last_sync or '-' }}</td>
+      <td class="{{ 'late' if d.last_status and d.last_status.startswith('Error') else 'okc' }}">{{ d.last_status or '-' }}</td>
+      <td>
+        <form class="inline" method="post" action="{{ url_for('device_test', did=d.id) }}"><button class="sec">Test</button></form>
+        <form class="inline" method="post" action="{{ url_for('device_sync', did=d.id) }}"><button class="sec">Sync</button></form>
+        <form class="inline" method="post" action="{{ url_for('device_toggle', did=d.id) }}"><button class="sec">{{ 'Disable' if d.active else 'Enable' }}</button></form>
+        <form class="inline" method="post" action="{{ url_for('device_delete', did=d.id) }}" onsubmit="return confirm('Remove this device? Imported punches are kept.')"><button class="del">Remove</button></form>
+      </td>
+    </tr>
+    {% else %}<tr><td colspan="5" class="mute">No devices yet.</td></tr>{% endfor %}
+  </table>
+</div>
+{% endblock %}

@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Shifts</h1>
+<div class="card">
+  <h2>Add shift</h2>
+  <form method="post" class="grid">
+    <label>Name<input name="name" required></label>
+    <label>Start<input type="time" name="start_time" value="08:00" required></label>
+    <label>End<input type="time" name="end_time" value="17:00" required></label>
+    <label>Grace (minutes)<input type="number" name="grace_min" value="10" min="0"></label>
+    <label>Work days
+      <span>{% for n, d in [(0,'Mon'),(1,'Tue'),(2,'Wed'),(3,'Thu'),(4,'Fri'),(5,'Sat'),(6,'Sun')] %}
+        <label style="display:inline-flex;flex-direction:row;gap:3px;margin-right:6px"><input type="checkbox" name="workdays" value="{{ n }}" {{ 'checked' if n < 5 }}>{{ d }}</label>{% endfor %}
+      </span>
+    </label>
+    <div><button>Add</button></div>
+  </form>
+</div>
+<div class="card">
+  <table>
+    <tr><th>Name</th><th>Hours</th><th>Grace</th><th>Days</th><th>Employees</th><th></th></tr>
+    {% set names = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'] %}
+    {% for s in rows %}
+    <tr><td>{{ s.name }}</td><td>{{ s.start_time }} - {{ s.end_time }}</td><td>{{ s.grace_min }} min</td>
+        <td>{% for n in s.workdays.split(',') %}{{ names[n|int] }} {% endfor %}</td><td>{{ s.used }}</td>
+        <td><form class="inline" method="post" action="{{ url_for('shift_delete', sid=s.id) }}" onsubmit="return confirm('Delete this shift?')"><button class="del">Delete</button></form></td></tr>
+    {% endfor %}
+  </table>
+</div>
+{% endblock %}

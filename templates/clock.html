@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% from "_brand.html" import brand %}
+{% block title %}Clock in / out - 4nextech Time{% endblock %}
+{% block content %}
+<div class="card" style="max-width:380px;margin:40px auto">
+  {{ brand(true) }}
+  <h1>Clock in / out</h1>
+  {% if result %}
+    <p class="flash ok"><b>{{ result.name }}</b>, recorded at {{ result.ts }}</p>
+  {% endif %}
+  <form method="post" class="grid" style="grid-template-columns:1fr">
+    <label>Employee code<input name="code" required autocomplete="off" autofocus></label>
+    <label>PIN<input name="pin" type="password" inputmode="numeric" required autocomplete="off"></label>
+    <button>Record time</button>
+  </form>
+  <p class="mute">Each press records a punch. Your first and last punch of the day are used for the report.</p>
+  {% if not session.admin %}<p class="mute"><a href="{{ url_for('login') }}">Admin login</a></p>{% endif %}
+</div>
+{% endblock %}

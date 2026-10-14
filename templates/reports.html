@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>{{ company or 'Reports' }}</h1>
+{% if company %}<p class="mute">Attendance report &middot; {{ start }} to {{ end }}{% if dept %} &middot; {{ dept }}{% endif %}</p>{% endif %}
+<div class="card">
+  <form method="get" class="grid">
+    <label>Company name {% if need_company %}<strong>(required)</strong>{% endif %}
+      <input type="text" name="company" value="{{ company }}" maxlength="120" placeholder="Enter your company name" {{ 'required autofocus' if need_company }}>
+    </label>
+    <label>From<input type="date" name="start" value="{{ start }}"></label>
+    <label>To<input type="date" name="end" value="{{ end }}"></label>
+    {% if not need_company %}
+    <label>Department
+      <select name="dept"><option value="">All</option>{% for d in depts %}<option {{ 'selected' if d == dept }}>{{ d }}</option>{% endfor %}</select>
+    </label>
+    {% endif %}
+    <div>
+      <button>{{ 'Save and show report' if need_company else 'Run' }}</button>
+      {% if not need_company %}
+      <button class="sec" name="refresh" value="1" title="Pull the latest punches from all devices now">Refresh from devices</button>
+      <button class="sec" name="format" value="xlsx">Excel</button>
+      <button class="sec" name="format" value="pdf">PDF</button>
+      <button class="sec" name="format" value="csv">CSV</button>
+      {% endif %}
+    </div>
+  </form>
+</div>
+{% if need_company %}
+<div class="card"><p>Please enter the company name above. It is saved and printed as the heading of every report (screen, Excel, PDF and CSV). You can change it here at any time.</p></div>
+{% else %}
+<div class="card">
+  <h2>Summary: total time per user</h2>
+  <table>
+    <tr><th>Code</th><th>Name</th><th>Dept</th><th>Days present</th><th>Late days</th><th>Absent</th><th>Total time (h:mm)</th><th>Hours</th><th>Overtime (h:mm)</th></tr>
+    {% for s in summary %}
+    <tr><td>{{ s.code }}</td><td>{{ s.name }}</td><td>{{ s.department }}</td><td>{{ s.present }}</td>
+        <td class="{{ 'late' if s.late }}">{{ s.late }}</td><td class="{{ 'late' if s.absent }}">{{ s.absent }}</td>
+        <td><strong>{{ s.total_time }}</strong></td><td>{{ s.hours }}</td><td>{{ s.ot_time }}</td></tr>
+    {% else %}<tr><td colspan="9" class="mute">No data.</td></tr>{% endfor %}
+    {% if summary %}
+    <tr><td></td><td><strong>TOTAL (all users)</strong></td><td></td><td><strong>{{ totals.present }}</strong></td><td><strong>{{ totals.late }}</strong></td>
+        <td><strong>{{ totals.absent }}</strong></td><td><strong>{{ totals.total_time }}</strong></td><td><strong>{{ (totals.minutes / 60) | round(2) }}</strong></td><td><strong>{{ totals.ot_time }}</strong></td></tr>
+    {% endif %}
+  </table>
+</div>
+<div class="card">
+  <h2>Clock in / clock out, every user</h2>
+  <table>
+    <tr><th>Date</th><th>Employee</th><th>Clock in</th><th>Clock out</th><th>Total time</th><th>Late (min)</th><th>OT (min)</th><th>Status</th></tr>
+    {% for r in rows %}
+    <tr><td>{{ r.date }}</td><td>{{ r.name }}</td><td>{{ r.first_in }}</td><td>{{ r.last_out }}</td><td>{{ r.total_time }}</td>
+        <td class="{{ 'late' if r.late_min }}">{{ r.late_min or '' }}</td><td>{{ r.overtime_min or '' }}</td>
+        <td class="{{ 'late' if r.status in ('Absent','Late','Missing out') else 'okc' }}">{{ r.status }}</td></tr>
+    {% else %}<tr><td colspan="8" class="mute">No rows.</td></tr>{% endfor %}
+  </table>
+</div>
+{% endif %}
+{% endblock %}

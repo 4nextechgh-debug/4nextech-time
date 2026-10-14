@@ -1,0 +1,121 @@
+{% from "_brand.html" import brand %}<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}4nextech Time{% endblock %}</title>
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#2457d6">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="4nextech">
+<link rel="icon" type="image/png" href="/static/icons/favicon.png">
+<link rel="apple-touch-icon" href="/static/icons/apple-touch-icon.png">
+<style>
+:root{--bg:#f6f7f9;--card:#fff;--ink:#1c2430;--mute:#667085;--line:#e4e7ec;--acc:#2457d6;--bad:#c0392b;--ok:#1e8e5a}
+@media (prefers-color-scheme:dark){:root{--bg:#12151a;--card:#1b2028;--ink:#e8ecf2;--mute:#9aa4b2;--line:#2a313c;--acc:#6b93ff;--bad:#ff7b6b;--ok:#4cc28a}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+nav{background:var(--card);border-bottom:1px solid var(--line);padding:10px 16px;display:flex;gap:14px;flex-wrap:wrap;align-items:center}
+nav a{color:var(--ink);text-decoration:none;padding:4px 2px} nav a:hover{color:var(--acc)} nav .sp{flex:1}
+.brand{display:inline-flex;align-items:center;gap:8px;line-height:1.05;margin-right:10px}
+.brand img{height:30px;width:auto;border-radius:6px;display:block}
+.brand .t{display:flex;flex-direction:column}
+.brand.big img{height:44px}
+.brand b{font-weight:800;font-size:19px;letter-spacing:-.01em;color:var(--ink)}
+.brand span{font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--mute);font-weight:500}
+.brand.big{display:flex;align-items:center;margin:0 0 16px}
+.brand.big b{font-size:32px} .brand.big span{font-size:14px}
+main{max-width:1000px;margin:0 auto;padding:16px}
+h1{font-size:22px;margin:8px 0 14px} h2{font-size:16px;margin:0 0 10px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px;margin-bottom:14px;overflow-x:auto}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;align-items:end}
+label{display:flex;flex-direction:column;font-size:13px;color:var(--mute);gap:4px}
+input,select,button{font:inherit;padding:8px 10px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink)}
+button{background:var(--acc);color:#fff;border:0;cursor:pointer} button.sec{background:var(--bg);color:var(--ink);border:1px solid var(--line)} button.del{background:var(--bad)}
+table{width:100%;border-collapse:collapse;font-size:14px} th,td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--line);white-space:nowrap} th{color:var(--mute);font-weight:600}
+.flash{padding:10px 12px;border-radius:8px;margin-bottom:10px;border:1px solid var(--line);background:var(--card)}
+.flash.ok{border-color:var(--ok);color:var(--ok)} .flash.bad{border-color:var(--bad);color:var(--bad)}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px} .stat b{display:block;font-size:26px} .stat span{color:var(--mute);font-size:13px}
+.mute{color:var(--mute)} form.inline{display:inline} .tag{font-size:12px;padding:2px 8px;border-radius:99px;border:1px solid var(--line)}
+.late{color:var(--bad)} .okc{color:var(--ok)}
+
+#ibar{position:fixed;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom,0px));max-width:460px;margin:0 auto;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;display:flex;gap:10px;align-items:center;box-shadow:0 6px 24px rgba(0,0,0,.25);z-index:50}
+#ibar[hidden]{display:none} #ibar img{width:44px;height:44px;border-radius:10px} #ibar .tx{flex:1;font-size:13px;line-height:1.35} #ibar b{display:block;font-size:14px}
+#ibar button{white-space:nowrap}
+#devtag{position:fixed;right:8px;bottom:4px;font-size:10px;color:var(--mute);opacity:.7;pointer-events:none}
+html[data-device=phone] main{padding:10px} html[data-device=phone] nav{gap:10px;padding:8px 10px}
+html[data-device=phone] .stats{grid-template-columns:1fr} html[data-device=phone] input,html[data-device=phone] select,html[data-device=phone] button{font-size:16px;padding:11px 12px}
+html[data-device=phone] h1{font-size:19px}
+@media (max-width:600px){.stats{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+{% if session.admin %}
+<nav>
+  {{ brand() }}
+  <a href="{{ url_for('dashboard') }}">Dashboard</a>
+  <a href="{{ url_for('employees') }}">Employees</a>
+  <a href="{{ url_for('shifts') }}">Shifts</a>
+  <a href="{{ url_for('device_list') }}">Devices</a>
+  <a href="{{ url_for('punches') }}">Punches</a>
+  <a href="{{ url_for('report_view') }}">Reports</a>
+  <a href="{{ url_for('clock') }}">Web clock</a>
+  <span class="sp"></span>
+  <button id="install" class="sec" hidden type="button">Install app</button>
+  <a href="{{ url_for('logout') }}">Log out</a>
+</nav>
+{% endif %}
+<main>
+{% with msgs = get_flashed_messages(with_categories=true) %}
+  {% for cat, m in msgs %}<div class="flash {{ cat }}">{{ m }}</div>{% endfor %}
+{% endwith %}
+{% block content %}{% endblock %}
+</main>
+<div id="ibar" hidden>
+  <img src="/static/icons/icon-192.png" alt="">
+  <div class="tx"><b>Install 4nextech Time</b><span id="itext">Add it to this device for quick access.</span></div>
+  <button id="ibtn" type="button">Install</button>
+  <button id="ix" class="sec" type="button" aria-label="Dismiss">&times;</button>
+</div>
+<div id="devtag"></div>
+<script>
+(function(){
+const ua=navigator.userAgent,de=document.documentElement;
+const touch=navigator.maxTouchPoints>1;
+const ios=/iPhone|iPad|iPod/.test(ua)||(navigator.platform==='MacIntel'&&touch);
+const android=/Android/.test(ua);
+const tablet=/iPad/.test(ua)||(android&&!/Mobile/.test(ua))||(navigator.platform==='MacIntel'&&touch);
+const phone=!tablet&&(/iPhone|iPod/.test(ua)||(android&&/Mobile/.test(ua))||(window.matchMedia('(max-width:600px)').matches&&touch));
+const device=phone?'phone':tablet?'tablet':'pc';
+const os=ios?'iOS':android?'Android':/Windows/.test(ua)?'Windows':/Mac/.test(ua)?'macOS':/Linux/.test(ua)?'Linux':'Other';
+const browser=/Edg\//.test(ua)?'Edge':/Chrome\//.test(ua)?'Chrome':/Firefox\//.test(ua)?'Firefox':/Safari\//.test(ua)?'Safari':'Browser';
+const installed=window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone===true;
+de.dataset.device=device;de.dataset.os=os;de.dataset.installed=installed?'yes':'no';
+window.DEVICE={device,os,browser,installed};
+document.cookie='device='+device+'-'+os+(installed?'-app':'-web')+';path=/;max-age=31536000;SameSite=Lax';
+document.getElementById('devtag').textContent=(installed?'App':'Web')+' \u00b7 '+os+' \u00b7 '+device;
+const bar=document.getElementById('ibar'),btn=document.getElementById('ibtn'),txt=document.getElementById('itext');
+const KEY='4nt_install_dismissed';
+const dismissed=()=>{try{return Date.now()-Number(localStorage.getItem(KEY)||0)<6048e5}catch(e){return false}};
+const hide=()=>{bar.hidden=true};
+document.getElementById('ix').onclick=()=>{try{localStorage.setItem(KEY,Date.now())}catch(e){};hide()};
+let dip=null;
+function show(msg,label){if(installed||dismissed())return;txt.textContent=msg;btn.textContent=label;bar.hidden=false}
+if('serviceWorker' in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js').catch(()=>{}));
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();dip=e;
+  show(device==='pc'?'Install on this computer to open it like a program.':'Add it to your home screen to open it like an app.','Install');
+  const nb=document.getElementById('install');if(nb)nb.hidden=false;});
+async function doInstall(){if(!dip)return;dip.prompt();await dip.userChoice;dip=null;hide();const nb=document.getElementById('install');if(nb)nb.hidden=true}
+btn.onclick=()=>{if(dip)doInstall();else hide()};
+const nb=document.getElementById('install');if(nb)nb.onclick=doInstall;
+window.addEventListener('appinstalled',()=>{hide();if(nb)nb.hidden=true});
+// iOS never fires the install event: show the manual steps automatically
+if(ios&&!installed)window.addEventListener('load',()=>{show('Tap the Share button, then "Add to Home Screen".','Got it')});
+// no install support (plain http or other browser): explain once
+else if(!installed&&!window.isSecureContext)window.addEventListener('load',()=>setTimeout(()=>{if(!dip)show('To install, open this site over HTTPS. For now use your browser menu > Add to Home screen.','OK')},1500));
+})();
+</script>
+</body>
+</html>

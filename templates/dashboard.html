@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Dashboard</h1>
+<div class="stats">
+  <div class="stat"><b>{{ stats.present }}</b><span>Punched today</span></div>
+  <div class="stat"><b>{{ stats.employees }}</b><span>Active employees</span></div>
+  <div class="stat"><b>{{ stats.devices }}</b><span>Active devices</span></div>
+</div>
+<div class="card">
+  <h2>Latest punches</h2>
+  <table>
+    <tr><th>Time</th><th>Employee</th><th>Source</th><th>Device</th></tr>
+    {% for p in recent %}
+    <tr><td>{{ p.ts }}</td><td>{{ p.name }} <span class="mute">({{ p.employee_code }})</span></td>
+        <td><span class="tag">{{ p.source }}</span></td><td>{{ p.device_name }}</td></tr>
+    {% else %}<tr><td colspan="4" class="mute">No punches yet.</td></tr>{% endfor %}
+  </table>
+</div>
+{% endblock %}

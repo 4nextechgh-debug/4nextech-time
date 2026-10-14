@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% from "_brand.html" import brand %}
+{% block title %}Admin login - 4nextech Time{% endblock %}
+{% block content %}
+<div class="card" style="max-width:360px;margin:60px auto">
+  {{ brand(true) }}
+  <h2>Admin login</h2>
+  <form method="post" class="grid" style="grid-template-columns:1fr">
+    <label>Password<input type="password" name="password" autofocus required></label>
+    <button>Log in</button>
+  </form>
+  <p class="mute"><a href="{{ url_for('clock') }}">Employee clock-in</a></p>
+</div>
+{% endblock %}

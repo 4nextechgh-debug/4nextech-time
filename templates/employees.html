@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Employees</h1>
+<div class="card">
+  <h2>{{ 'Edit' if emp else 'Add' }} employee</h2>
+  <form method="post" action="{{ url_for('employee_save') }}" class="grid">
+    <input type="hidden" name="id" value="{{ emp.id if emp else '' }}">
+    <label>Code (device user ID)<input name="code" required value="{{ emp.code if emp else '' }}"></label>
+    <label>Name<input name="name" required value="{{ emp.name if emp else '' }}"></label>
+    <label>Department<input name="department" value="{{ emp.department if emp else '' }}"></label>
+    <label>Shift
+      <select name="shift_id">
+        {% for s in shifts %}<option value="{{ s.id }}" {{ 'selected' if emp and emp.shift_id == s.id }}>{{ s.name }} ({{ s.start_time }}-{{ s.end_time }})</option>{% endfor %}
+      </select>
+    </label>
+    <label>Web clock PIN{% if emp %} (blank = keep){% endif %}<input name="pin" type="password" inputmode="numeric" autocomplete="new-password"></label>
+    <div><button>Save</button> {% if emp %}<a href="{{ url_for('employees') }}">Cancel</a>{% endif %}</div>
+  </form>
+  <p class="mute">The code must match the user ID enrolled on your devices. Syncing a device also creates any missing employees automatically.</p>
+</div>
+<div class="card">
+  <table>
+    <tr><th>Code</th><th>Name</th><th>Department</th><th>Shift</th><th>Web PIN</th><th></th></tr>
+    {% for r in rows %}
+    <tr {% if not r.active %}class="mute"{% endif %}>
+      <td>{{ r.code }}</td><td>{{ r.name }}</td><td>{{ r.department }}</td><td>{{ r.shift_name or '-' }}</td>
+      <td>{{ 'set' if r.pin_hash else '-' }}</td>
+      <td>
+        <a href="{{ url_for('employees', edit=r.id) }}">Edit</a>
+        <form class="inline" method="post" action="{{ url_for('employee_toggle', eid=r.id) }}"><button class="sec">{{ 'Deactivate' if r.active else 'Activate' }}</button></form>
+      </td>
+    </tr>
+    {% else %}<tr><td colspan="6" class="mute">No employees yet.</td></tr>{% endfor %}
+  </table>
+</div>
+{% endblock %}

@@ -1,0 +1,19 @@
+name: Build Windows installer
+on: [workflow_dispatch, push]
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: pip install -r requirements-build.txt
+      - run: >
+          pyinstaller --noconfirm --clean --windowed --name "4nextech Time"
+          --icon static\icons\app.ico
+          --add-data "templates;templates" --add-data "static;static"
+          --hidden-import zk --hidden-import PIL.ImageTk --collect-data reportlab launcher.py
+      - run: choco install innosetup -y --no-progress
+      - run: iscc installer.iss
+      - uses: actions/upload-artifact@v4
+        with: { name: 4nextech-Time-Setup, path: installer_output/4nextech-Time-Setup.exe }

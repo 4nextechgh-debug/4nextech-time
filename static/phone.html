@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>4nextech Time - Phone</title>
+<meta name="theme-color" content="#2457d6">
+<style>
+body{margin:0;min-height:100vh;display:grid;place-items:center;background:#494a4d;color:#fff;font:16px system-ui,sans-serif}
+.box{width:min(92vw,360px);background:#1b2028;border-radius:14px;padding:22px;text-align:center}
+img{width:96px;height:96px;border-radius:16px}
+h1{font-size:20px;margin:10px 0 4px}p{color:#9aa4b2;font-size:14px;margin:6px 0 14px}
+input,button{width:100%;box-sizing:border-box;font:inherit;padding:12px;border-radius:10px;border:0;margin-top:8px}
+input{background:#12151a;color:#fff;border:1px solid #2a313c}button{background:#2457d6;color:#fff;font-weight:600}
+button.s{background:transparent;border:1px solid #2a313c;color:#9aa4b2}#err{color:#ff7b6b;min-height:1.2em;font-size:13px}
+</style></head><body>
+<div class="box">
+  <img src="icons/icon-192.png" onerror="this.style.display='none'" alt="">
+  <h1>4nextech Time</h1>
+  <p>Enter the address shown in the app on the PC (for example 192.168.1.20:5000). Phone and PC must be on the same Wi-Fi.</p>
+  <input id="addr" inputmode="url" autocapitalize="off" autocomplete="off" placeholder="192.168.1.20:5000">
+  <div id="err"></div>
+  <button id="go">Open 4nextech Time</button>
+  <button class="s" id="clock">Employee clock-in</button>
+</div>
+<script>
+// Opens the PC app straight away. Address sources, in order:
+// ?s=192.168.1.20:5000 in the link, a value baked into BAKED below, or the one saved last time.
+const BAKED='4nextech.local';
+const K='4nt_server',a=document.getElementById('addr'),e=document.getElementById('err');
+const get=()=>{try{return localStorage.getItem(K)||''}catch(x){return ''}};
+const set=v=>{try{localStorage.setItem(K,v)}catch(x){}};
+const clean=v=>{v=(v||'').trim().replace(/\/+$/,'').replace(/\/phone$/,'');if(!v)return '';return /^https?:\/\//.test(v)?v:'http://'+v};
+const q=new URLSearchParams(location.search).get('s');
+const known=clean(q)||clean(BAKED)||clean(get());
+a.value=known.replace(/^https?:\/\//,'');
+function go(path){const v=clean(a.value);if(!v){e.textContent='Enter the PC address first.';return}set(v);location.replace(v+path)}
+document.getElementById('go').onclick=()=>go('/');
+document.getElementById('clock').onclick=()=>go('/clock');
+if(known&&location.hash!=='#change'){e.textContent='Opening...';setTimeout(()=>go('/'),300)}
+</script></body></html>

@@ -1,0 +1,164 @@
+name: Build Android APK
+on: [workflow_dispatch, push]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: "17" }
+      - uses: gradle/actions/setup-gradle@v4
+        with: { gradle-version: "8.7" }
+      - name: Create Android project
+        run: |
+          set -e
+          P=android/app/src/main
+          mkdir -p $P/java/com/fournextech/time $P/res/mipmap-xxxhdpi
+          cat > android/settings.gradle <<'EOF'
+          pluginManagement { repositories { google(); mavenCentral(); gradlePluginPortal() } }
+          dependencyResolutionManagement { repositories { google(); mavenCentral() } }
+          rootProject.name = "FourNexTech"
+          include ':app'
+          EOF
+          cat > android/build.gradle <<'EOF'
+          plugins { id 'com.android.application' version '8.5.2' apply false }
+          EOF
+          echo "org.gradle.jvmargs=-Xmx2g" > android/gradle.properties
+          cat > android/app/build.gradle <<'EOF'
+          plugins { id 'com.android.application' }
+          android {
+            namespace 'com.fournextech.time'
+            compileSdk 34
+            defaultConfig {
+              applicationId 'com.fournextech.time'
+              minSdk 29
+              targetSdk 34
+              versionCode 1
+              versionName '1.0'
+            }
+            compileOptions {
+              sourceCompatibility JavaVersion.VERSION_17
+              targetCompatibility JavaVersion.VERSION_17
+            }
+          }
+          EOF
+          cat > $P/AndroidManifest.xml <<'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+            <uses-permission android:name="android.permission.INTERNET"/>
+            <application android:label="4nextech Time" android:icon="@mipmap/ic_launcher"
+                android:usesCleartextTraffic="true"
+                android:theme="@android:style/Theme.DeviceDefault.Light.NoActionBar">
+              <activity android:name=".MainActivity" android:exported="true"
+                  android:configChanges="orientation|screenSize|keyboardHidden">
+                <intent-filter>
+                  <action android:name="android.intent.action.MAIN"/>
+                  <category android:name="android.intent.category.LAUNCHER"/>
+                </intent-filter>
+              </activity>
+            </application>
+          </manifest>
+          EOF
+          cat > $P/java/com/fournextech/time/MainActivity.java <<'EOF'
+          package com.fournextech.time;
+
+          import android.app.Activity;
+          import android.app.AlertDialog;
+          import android.app.DownloadManager;
+          import android.content.SharedPreferences;
+          import android.net.Uri;
+          import android.os.Bundle;
+          import android.os.Environment;
+          import android.text.InputType;
+          import android.webkit.CookieManager;
+          import android.webkit.URLUtil;
+          import android.webkit.WebResourceError;
+          import android.webkit.WebResourceRequest;
+          import android.webkit.WebSettings;
+          import android.webkit.WebView;
+          import android.webkit.WebViewClient;
+          import android.widget.EditText;
+          import android.widget.Toast;
+
+          public class MainActivity extends Activity {
+            WebView web;
+            SharedPreferences prefs;
+            boolean dialogOpen = false;
+
+            @Override
+            protected void onCreate(Bundle b) {
+              super.onCreate(b);
+              prefs = getSharedPreferences("cfg", 0);
+              web = new WebView(this);
+              setContentView(web);
+              WebSettings s = web.getSettings();
+              s.setJavaScriptEnabled(true);
+              s.setDomStorageEnabled(true);
+              web.setWebViewClient(new WebViewClient() {
+                @Override
+                public void onReceivedError(WebView v, WebResourceRequest r, WebResourceError e) {
+                  if (r.isForMainFrame()) askServer("Can't reach the server. Check the address and that 4nextech Time is running on the PC (same Wi-Fi).");
+                }
+              });
+              web.setDownloadListener((url, ua, cd, mime, len) -> {
+                DownloadManager.Request r = new DownloadManager.Request(Uri.parse(url));
+                r.setMimeType(mime);
+                r.addRequestHeader("cookie", CookieManager.getInstance().getCookie(url));
+                r.addRequestHeader("User-Agent", ua);
+                r.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
+                r.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, URLUtil.guessFileName(url, cd, mime));
+                ((DownloadManager) getSystemService(DOWNLOAD_SERVICE)).enqueue(r);
+                Toast.makeText(this, "Downloading to your Downloads folder", Toast.LENGTH_SHORT).show();
+              });
+              String url = prefs.getString("url", null);
+              if (url == null) askServer("Enter the address of your 4nextech Time server.");
+              else web.loadUrl(url);
+            }
+
+            void askServer(String msg) {
+              if (dialogOpen) return;
+              dialogOpen = true;
+              final EditText in = new EditText(this);
+              in.setText(prefs.getString("url", "http://4nextech.local"));
+              in.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_URI);
+              new AlertDialog.Builder(this)
+                .setTitle("Server address")
+                .setMessage(msg + "\n\nExample: http://192.168.1.10:5000")
+                .setView(in)
+                .setCancelable(false)
+                .setPositiveButton("Connect", (d, w) -> {
+                  String u = in.getText().toString().trim();
+                  if (!u.startsWith("http")) u = "http://" + u;
+                  prefs.edit().putString("url", u).apply();
+                  web.loadUrl(u);
+                })
+                .setNegativeButton("Close app", (d, w) -> finish())
+                .setOnDismissListener(d -> dialogOpen = false)
+                .show();
+            }
+
+            @Override
+            public void onBackPressed() {
+              if (web.canGoBack()) web.goBack(); else super.onBackPressed();
+            }
+          }
+          EOF
+          ICON=$(find . -name icon-192.png -not -path './android/*' | head -1)
+          if [ -n "$ICON" ]; then cp "$ICON" $P/res/mipmap-xxxhdpi/ic_launcher.png; else
+          python3 - <<'PY'
+          import zlib, struct
+          w = h = 192
+          raw = b''.join(b'\x00' + bytes([30, 90, 160]) * w for _ in range(h))
+          def ch(t, d):
+              c = struct.pack('>I', len(d)) + t + d
+              return c + struct.pack('>I', zlib.crc32(t + d) & 0xffffffff)
+          png = b'\x89PNG\r\n\x1a\n' + ch(b'IHDR', struct.pack('>IIBBBBB', w, h, 8, 2, 0, 0, 0)) + ch(b'IDAT', zlib.compress(raw)) + ch(b'IEND', b'')
+          open('android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png', 'wb').write(png)
+          PY
+          fi
+      - name: Build APK
+        run: cd android && gradle assembleDebug --no-daemon
+      - uses: actions/upload-artifact@v4
+        with:
+          name: 4nextech-Time-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
